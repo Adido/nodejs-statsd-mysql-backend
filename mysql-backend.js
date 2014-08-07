@@ -10,7 +10,7 @@
 var _mysql = require('mysql'),
     util = require('util'),
     fs = require('fs'),
-    sequence = require('sequence').Sequence().create();
+    sequence = require('sequence').Sequence.create();
 
 var STATSD_PACKETS_RECEIVED = "statsd.packets_received";
 var STATSD_BAD_LINES = "statsd.bad_lines_seen";
@@ -37,6 +37,7 @@ var STATSD_BAD_LINES = "statsd.bad_lines_seen";
 function StatdMySQLBackend(startupTime, config, emitter) {
   var self = this;
   self.config = config.mysql || {};
+  self.sqlConnection = false;
   self.engines = {
     counters: [],
     gauges: [],
@@ -155,10 +156,13 @@ StatdMySQLBackend.prototype.openMySqlConnection = function() {
   var canExecuteQuerries = true;
 
   // Create MySQL connection
-  self.sqlConnection = _mysql.createConnection(this.config);
-  self.sqlConnection.connect(function(error){
-    canExecuteQuerries = false;
-  });
+  // self.sqlConnection = _mysql.createConnection(this.config);
+  if(!self.sqlConnection) {
+    self.sqlConnection = _mysql.createPool(this.config);
+  }
+  // self.sqlConnection.connect(function(error){
+    // canExecuteQuerries = false;
+  // });
 
   return canExecuteQuerries;
 }
@@ -169,7 +173,7 @@ StatdMySQLBackend.prototype.openMySqlConnection = function() {
  *
  */
 StatdMySQLBackend.prototype.closeMySqlConnection = function() {
-  var self = this;
+/*  var self = this;
   self.sqlConnection.end(function(error) {
     if(error){
       console.log("There was an error while trying to close DB connection : " + util.inspect(error));
@@ -177,7 +181,7 @@ StatdMySQLBackend.prototype.closeMySqlConnection = function() {
       self.sqlConnection.destroy();
     }
   });
-
+*/
   return;
 }
 
